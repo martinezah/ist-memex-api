@@ -2,6 +2,9 @@ import os
 
 MEMEX_API_VERSION = "0.1"
 
+HBASE_HOST = os.environ['HBASE_HOST']
+HBASE_PREFIX = os.environ['HBASE_PREFIX']
+
 try:
     if os.environ['APPLICATION_ENV'] is 'production':
         DEBUG = False   
@@ -26,9 +29,6 @@ DATABASES = {
         'PORT': '',
     },
 }
-
-HBASE_HOST = os.environ['HBASE_HOST']
-HBASE_PREFIX = os.environ['HBASE_PREFIX']
 
 CACHES = {
     'default': {
