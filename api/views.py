@@ -12,9 +12,11 @@ def index(request):
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 @require_http_methods(["POST"])
-def get_urlkey(request):
+def get_urlkey(request, fmt):
+    response = None
     status = 200
-    response = ''
+    content_type = None
+    urlkey = None
     try:
         url = request.body
         try:
@@ -25,17 +27,40 @@ def get_urlkey(request):
         url_parts = urlparse.urlsplit(url)
         domain_path = url_parts.hostname.split('.')
         domain_path.reverse()
-        response = "{0}_{1}".format("_".join(domain_path), url_hash)
+        urlkey = "{0}_{1}".format("_".join(domain_path), url_hash)
     except:
         status = 400
+        urlkey = ''
+    if fmt == "txt" or fmt is None:
+        content_type = "text/plain"
+        response = urlkey
+    elif fmt == "json":
+        response = json.dumps({'urlkey':urlkey})
+        content_type="application/json"
+    else:
+        content_type = "text/plain"
+        status = 400
         response = ''
-
-    return HttpResponse(response, content_type="text/plain", status=status)
+    return HttpResponse(response, content_type=content_type, status=status)
 
 @require_http_methods(["GET"])
-def get_timestamp(request):
-    response = calendar.timegm(datetime.utcnow().utctimetuple())
-    return HttpResponse(json.dumps(response), content_type="text/plain")
+def get_timestamp(request, fmt):
+    response = None
+    status = 200
+    content_type = None
+    urlkey = None
+    timestamp = calendar.timegm(datetime.utcnow().utctimetuple())
+    if fmt == "txt" or fmt is None:
+        content_type = "text/plain"
+        response = timestamp
+    elif fmt == "json":
+        response = json.dumps({'timestamp':timestamp})
+        content_type="application/json"
+    else:
+        content_type = "text/plain"
+        status = 400
+        response = ''
+    return HttpResponse(response, content_type=content_type, status=status)
 
 @require_http_methods(["GET"])
 def search_by_timestamp(request, start, stop):
