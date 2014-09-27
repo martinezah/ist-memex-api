@@ -64,25 +64,57 @@ def get_timestamp(request, fmt):
 
 @require_http_methods(["GET"])
 def search_by_timestamp(request, start, stop):
-    response = {"view":"search_by_timestamp"}
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    limit = request.REQUEST.get("limit", 1000)
+    expand = request.REQUEST.get("expand", False)
+    if stop is None:
+        stop = calendar.timegm(datetime.utcnow().utctimetuple())
+    result = TimestampIndex.scan(start, stop, limit, expand)
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 @require_http_methods(["GET"])
 def search_by_attribute(request, attribute, value):
-    response = {"view":"search_by_attribute"}
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    limit = request.REQUEST.get("limit", 1000)
+    expand = request.REQUEST.get("expand", False)
+    result = AttributeIndex.scan(attribute, value, limit, expand)
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 @require_http_methods(["GET", "POST"])
 def urlkey_list(request, urlkey, start, stop):
-    response = {"view":"urlkey_list"}
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    if request.method == "GET":
+        limit = request.REQUEST.get("limit", 1000)
+        expand = request.REQUEST.get("expand", False)
+        if stop is None:
+            stop = calendar.timegm(datetime.utcnow().utctimetuple())
+        result = Artifact.scan(urlkey, start, stop, limit, expand)
+        if result is None:
+            return HttpResponseNotFound(json.dumps({"error":"not found", "debug":urlkey}))
+        return HttpResponse(json.dumps(result, indent=2), content_type="application/json")
+    elif request.method == "POST":
+        data = json.loads(request.body)
+        timestamp = calendar.timegm(datetime.utcnow().utctimetuple())
+        result = Artifact.put(urlkey, timestamp, data["data"])
+        return HttpResponse(json.dumps({"result":result, "timestamp":timestamp}), content_type="application/json")
 
 @require_http_methods(["GET", "PUT"])
 def urlkey_item_attribute(request, urlkey, timestamp, attribute):
-    response = {"view":"urlkey_item_attribute"}
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    if request.method == "GET":
+        item = Attribute.get("{0}_{1}".format(urlkey, timestamp), attribute)
+        if item is None:
+            return HttpResponseNotFound(json.dumps({"error":"not found"}))
+        return HttpResponse(item, content_type="application/json")
+    elif request.method == "PUT":
+        data = request.body
+        result = Attribute.put("{0}_{1}".format(urlkey, timestamp), attribute, data)
+        return HttpResponse(json.dumps(result), content_type="application/json")
 
 @require_http_methods(["GET", "PUT"])
 def urlkey_item(request, urlkey, timestamp):
-    response = {"view":"urlkey_item"}
-    return HttpResponse(json.dumps(response), content_type="application/json")
+    if request.method == "GET":
+        item = Artifact.get(urlkey, timestamp)
+        if item is None:
+            return HttpResponseNotFound(json.dumps({"error":"not found"}))
+        return HttpResponse(json.dumps(item, indent=2), content_type="application/json")
+    elif request.method == "PUT":
+        data = json.loads(request.body)
+        result = Artifact.put(urlkey, timestamp, data["data"])
+        return HttpResponse(json.dumps({"result":result}), content_type="application/json")

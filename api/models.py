@@ -4,10 +4,10 @@ import settings
 class Artifact():
 
     @staticmethod
-    def get(urlkey, timestamp):
+    def get(urlkey, timestamp = None):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "artifact_data"))
-        artifact_key = '{0}_{1}'.format(urlkey, timestamp)
+        artifact_key = urlkey if timestamp is None else '{0}_{1}'.format(urlkey, timestamp) 
         row = table.row(artifact_key)
         data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
         return data
@@ -22,19 +22,24 @@ class Artifact():
         return True
 
     @staticmethod
-    def scan(prefix, start, end, limit = 1000, expand = False):
+    def scan(urlkey, start, end, limit = 1000, expand = False):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "artifact_data"))
         result = []
-        if end is None:
-            end = start + 1
+        if start is None:
+            for artifact_key, row in table.scan(row_prefix="{0}_".format(urlkey), limit = int(limit)):
+                data = artifact_key
+                if expand:
+                    data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
+                result.append(data)
         else:
-            end = end + 1
-        for artifact_key, row in table.scan(row_start = "{0}_{1}".format(prefix, start), row_stop = "{0}_{1}".format(prefix, end), limit = limit):
-            data = artifact_key
-            if expand:
-                data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
-            result.append(data)
+            end = str(int(end) + 1)
+            for artifact_key, row in table.scan(row_start="{0}_{1}".format(urlkey, start), row_stop="{0}_{1}".format(urlkey, end), limit = int(limit)):
+                data = artifact_key
+                if expand:
+                    data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
+                result.append(data)
+        return result
 
 class Attribute():
 
@@ -72,7 +77,7 @@ class TimestampIndex():
     def put(urlkey, timestamp):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "timestamp_artifact_index"))
-        table.put('{0}__{1}'.format(timestamp, urlkey, {'f:vv':'1'})
+        table.put('{0}__{1}'.format(timestamp, urlkey), {'f:vv':'1'})
         return True
 
     @staticmethod 
@@ -80,11 +85,8 @@ class TimestampIndex():
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "timestamp_artifact_index"))
         result = []
-        if end is None:
-            end = start + 1
-        else:
-            end = end + 1
-        for kk, vv in table.scan(row_start = start, row_stop = end, limit = limit):
+        end = str(int(end) + 1)
+        for kk, vv in table.scan(row_start = start, row_stop = end, limit = int(limit)):
             data = kk.split('__')
             artifact_key = '{0}_{1}'.format(data[1], data[0])
             if expand:
@@ -107,7 +109,7 @@ class AttributeIndex():
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "attribute_artifact_index"))
         result = []
-        for kk, vv in table.scan(row_prefix='{0}__{1}__'.format(attribute, value), limit = limit):
+        for kk, vv in table.scan(row_prefix='{0}__{1}__'.format(attribute, value), limit = int(limit)):
             data = kk.split('__')
             artifact_key = data[2]
             if expand:
