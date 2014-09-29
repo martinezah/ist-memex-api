@@ -3,6 +3,7 @@ import views
 
 urlpatterns = patterns('',
     url(r'^/?$', 'api.views.index'),
+    url(r'^recent/?$', 'api.views.search_by_timestamp'),
     url(r'^hash(\.(?P<fmt>[a-z0-9]+))?$', 'api.views.get_urlkey'),
     url(r'^timestamp(\.(?P<fmt>[a-z0-9]+))?$', 'api.views.get_timestamp'),
     url(r'^from/(?P<start>[^/]+)(/to/(?P<stop>[^/]+))?/?$', 'api.views.search_by_timestamp'),

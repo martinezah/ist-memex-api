@@ -1,5 +1,4 @@
-import json, calendar, urlparse, hashlib
-from datetime import datetime
+import json, calendar, urlparse, hashlib, datetime
 from django.views.decorators.http import require_http_methods
 from django.http import *
 
@@ -49,7 +48,7 @@ def get_timestamp(request, fmt):
     status = 200
     content_type = None
     urlkey = None
-    timestamp = calendar.timegm(datetime.utcnow().utctimetuple())
+    timestamp = calendar.timegm(datetime.datetime.utcnow().utctimetuple())
     if fmt == "txt" or fmt is None:
         content_type = "text/plain"
         response = timestamp
@@ -63,11 +62,14 @@ def get_timestamp(request, fmt):
     return HttpResponse(response, content_type=content_type, status=status)
 
 @require_http_methods(["GET"])
-def search_by_timestamp(request, start, stop):
+def search_by_timestamp(request, start = None, stop = None):
     limit = request.REQUEST.get("limit", 1000)
     expand = request.REQUEST.get("expand", False)
     if stop is None:
-        stop = calendar.timegm(datetime.utcnow().utctimetuple())
+        stop = str(calendar.timegm(datetime.datetime.utcnow().utctimetuple()))
+    if start is None:
+        secs = request.REQUEST.get("secs", 300)
+        start = str(int(stop) - int(secs))
     result = TimestampIndex.scan(start, stop, limit, expand)
     return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -84,14 +86,14 @@ def urlkey_list(request, urlkey, start, stop):
         limit = request.REQUEST.get("limit", 1000)
         expand = request.REQUEST.get("expand", False)
         if stop is None:
-            stop = calendar.timegm(datetime.utcnow().utctimetuple())
+            stop = calendar.timegm(datetime.datetime.utcnow().utctimetuple())
         result = Artifact.scan(urlkey, start, stop, limit, expand)
         if result is None:
             return HttpResponseNotFound(json.dumps({"error":"not found", "debug":urlkey}))
         return HttpResponse(json.dumps(result, indent=2), content_type="application/json")
     elif request.method == "POST":
         data = json.loads(request.body)
-        timestamp = calendar.timegm(datetime.utcnow().utctimetuple())
+        timestamp = calendar.timegm(datetime.datetime.utcnow().utctimetuple())
         result = Artifact.put(urlkey, timestamp, data["data"])
         return HttpResponse(json.dumps({"result":result, "timestamp":timestamp}), content_type="application/json")
 
