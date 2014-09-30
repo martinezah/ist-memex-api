@@ -62,14 +62,18 @@ def get_timestamp(request, fmt):
     return HttpResponse(response, content_type=content_type, status=status)
 
 @require_http_methods(["GET"])
+def scan_timestamps(request):
+    limit = request.REQUEST.get("limit", 1000)
+    expand = request.REQUEST.get("expand", False)
+    result = TimestampIndex.scan(limit=limit, expand=expand)
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+@require_http_methods(["GET"])
 def search_by_timestamp(request, start = None, stop = None):
     limit = request.REQUEST.get("limit", 1000)
     expand = request.REQUEST.get("expand", False)
     if stop is None:
         stop = str(calendar.timegm(datetime.datetime.utcnow().utctimetuple()))
-    if start is None:
-        secs = request.REQUEST.get("secs", 300)
-        start = str(int(stop) - int(secs))
     result = TimestampIndex.scan(start, stop, limit, expand)
     return HttpResponse(json.dumps(result), content_type="application/json")
 

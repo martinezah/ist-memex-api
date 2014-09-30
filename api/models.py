@@ -10,6 +10,7 @@ class Artifact():
         artifact_key = urlkey if timestamp is None else '{0}_{1}'.format(urlkey, timestamp) 
         row = table.row(artifact_key)
         data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
+        data['data']['response'] = data['data']['response'].decode('utf-8', 'ignore')
         return data
 
     @staticmethod
@@ -31,6 +32,7 @@ class Artifact():
                 data = artifact_key
                 if expand:
                     data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
+                    data['data']['response'] = data['data']['response'].decode('utf-8', 'ignore')
                 result.append(data)
         else:
             end = str(int(end) + 1)
@@ -38,6 +40,7 @@ class Artifact():
                 data = artifact_key
                 if expand:
                     data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
+                    data['data']['response'] = data['data']['response'].decode('utf-8', 'ignore')
                 result.append(data)
         return result
 
@@ -77,23 +80,41 @@ class TimestampIndex():
     def put(urlkey, timestamp):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "timestamp_artifact_index"))
-        table.put('{0}__{1}'.format(timestamp, urlkey), {'f:vv':'1'})
+        table.put('{0}__{1}'.format(flip_ts(timestamp), urlkey), {'f:vv':'1'})
         return True
 
     @staticmethod 
-    def scan(start, end, limit = 1000, expand = False):
+    def scan(start = None, end = None, limit = 1000, expand = False):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "timestamp_artifact_index"))
         result = []
-        end = str(int(end) + 1)
-        for kk, vv in table.scan(row_start = start, row_stop = end, limit = int(limit)):
+        if start is None:
+            for kk, vv in table.scan(limit = int(limit)):
+                data = kk.split('__')
+                artifact_key = '{0}_{1}'.format(data[1], flip_ts(data[0]))
+                if expand:
+                    result.append(Artifact.get(artifact_key))
+                else:
+                    result.append(artifact_key)
+            return result
+        # else
+        if end is None:
+            end = start
+        start = int(start) - 1
+        for kk, vv in table.scan(row_start = flip_ts(end), row_stop = flip_ts(start), limit = int(limit)):
             data = kk.split('__')
-            artifact_key = '{0}_{1}'.format(data[1], data[0])
+            artifact_key = '{0}_{1}'.format(data[1], flip_ts(data[0]))
             if expand:
                 result.append(Artifact.get(artifact_key))
             else:
                 result.append(artifact_key)
         return result
+
+def flip_ts(ts):
+    flipped = []
+    for cc in str(ts):
+        flipped.append(str(9 - int(cc)))
+    return "".join(flipped)
 
 class AttributeIndex():
     
