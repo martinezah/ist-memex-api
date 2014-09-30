@@ -1,8 +1,8 @@
-import os
+import os, random
 
 MEMEX_API_VERSION = "0.1"
 
-HBASE_HOST = os.environ['HBASE_HOST']
+HBASE_HOST = random.choice(os.environ.get('HBASE_HOST', 'localhost').split(','))
 HBASE_PREFIX = os.environ['HBASE_PREFIX']
 
 try:

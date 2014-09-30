@@ -1,5 +1,5 @@
 import sys, cbor, happybase, re
-import settings
+import settings, utility
 
 class Artifact():
 
@@ -10,7 +10,7 @@ class Artifact():
         artifact_key = urlkey if timestamp is None else '{0}_{1}'.format(urlkey, timestamp) 
         row = table.row(artifact_key)
         data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
-        data['data']['response'] = data['data']['response'].decode('utf-8', 'ignore')
+        data['data']['response'] = utility.fix_bad_unicode(data['data']['response'])
         return data
 
     @staticmethod
@@ -32,7 +32,7 @@ class Artifact():
                 data = artifact_key
                 if expand:
                     data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
-                    data['data']['response'] = data['data']['response'].decode('utf-8', 'ignore')
+                    data['data']['response'] = utility.fix_bad_unicode(data['data']['response'])
                 result.append(data)
         else:
             end = str(int(end) + 1)
@@ -40,7 +40,7 @@ class Artifact():
                 data = artifact_key
                 if expand:
                     data = {'key': artifact_key, 'data': cbor.loads(row['f:vv']), 'attributes' : Attribute.scan(artifact_key)}
-                    data['data']['response'] = data['data']['response'].decode('utf-8', 'ignore')
+                    data['data']['response'] = utility.fix_bad_unicode(data['data']['response'])
                 result.append(data)
         return result
 

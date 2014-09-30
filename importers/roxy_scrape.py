@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import MySQLdb, calendar, datetime, os, getopt, sys, urlparse, hashlib, json
+import MySQLdb, calendar, datetime, os, getopt, sys, urlparse, hashlib, json, time, math
 from api.models import *
 
 API_BASE_URL = os.environ.get('API_BASE_URL', "http://127.0.0.1:8000/")
@@ -58,7 +58,16 @@ if __name__ == "__main__":
                 "request": None,
                 "response": row[3],
             }
-            Artifact.put(urlkey, timestamp, data)
+            retries = 0
+            result = None
+            while retries < 5:
+                try:
+                    result = Artifact.put(urlkey, timestamp, data)
+                    break
+                except:
+                    sys.stderr.write('.')
+                    time.sleep(math.pow(2,retries))
+                    retries += 1
             if (row[0] % 100 == 0):
                 sys.stderr.write("{0}: {1}/{2}\n".format(row[0], urlkey, timestamp))
 
