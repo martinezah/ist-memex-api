@@ -1,8 +1,8 @@
 #!/bin/bash
 TABLE=$1
-END=$2
-START=0
-CHUNK=5000
+START=$2
+END=$3
+CHUNK=1000
 
 while [ "$START" -lt "$END" ] 
 do

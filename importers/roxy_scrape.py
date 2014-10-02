@@ -2,7 +2,7 @@
 import MySQLdb, calendar, datetime, os, getopt, sys, urlparse, hashlib, json, time, math
 from api.models import *
 
-API_BASE_URL = os.environ.get('API_BASE_URL', "http://127.0.0.1:8000/")
+SOFTWARE_DESC = "Memex Development Archiver https://github.com/istresearch/ist-memex-api"
 
 def parse_options():
     options = {}
@@ -39,6 +39,7 @@ if __name__ == "__main__":
         exit(1)
     db = MySQLdb.connect(options['host'], options['user'], options['password'], options['database'])
     with db:
+        artifacts = []
         sql = "SELECT id, url, headers AS response_headers, body, status, timestamp FROM {0} WHERE id >= {1} AND id <= {2}".format(options['table'], options['start'], options['end'])
         sys.stderr.write("{0}\n".format(sql))
         cursor = db.cursor()
@@ -46,28 +47,44 @@ if __name__ == "__main__":
         rows = cursor.fetchall()
         for row in rows:
             urlkey = create_url_key(row[1])
-            timestamp = calendar.timegm(row[5].utctimetuple())
+            timestamp = int(calendar.timegm(row[5].utctimetuple()) * 1000)
+            url_parts = urlparse.urlsplit(row[1])
             data = {
                 "url": row[1],
-                "method": "GET",
-                "status": row[4],
-                "headers": {
-                    "request": None,
-                    "response": row[2],
+                "request": {
+                    "method": "GET",
+                    "client": {
+                        "hostname": None,
+                        "address": None,
+                        "software": SOFTWARE_DESC,
+                        "robots": "classic",
+                        "contact": {
+                            "name": None,
+                            "email": None,
+                        },
+                    },
+                    "headers": None,
+                    "body": None,
                 },
-                "request": None,
-                "response": row[3],
+                "response": {
+                    "status": row[4],
+                    "server": {
+                        "hostname": url_parts.hostname,
+                        "address": None,
+                    },
+                    "headers": row[2],
+                    "body" : row[3],
+                },
             }
-            retries = 0
-            result = None
-            while retries < 5:
-                try:
-                    result = Artifact.put(urlkey, timestamp, data)
-                    break
-                except:
-                    sys.stderr.write('.')
-                    time.sleep(math.pow(2,retries))
-                    retries += 1
-            if (row[0] % 100 == 0):
-                sys.stderr.write("{0}: {1}/{2}\n".format(row[0], urlkey, timestamp))
+            artifacts.append({'urlkey': urlkey, 'timestamp': timestamp, 'data': data})
+        retries = 0
+        result = None
+        while retries < 10:
+            try:
+                result = Artifact.put_multi(artifacts) 
+                break
+            except:
+                sys.stderr.write('.')
+                time.sleep(math.pow(2,retries))
+                retries += 1
 

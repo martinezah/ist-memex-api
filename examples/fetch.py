@@ -1,21 +1,54 @@
 #!/usr/bin/env python
-import requests, urlparse, hashlib, calendar, sys, json, re, os
-from datetime import datetime
+import urlparse, hashlib, time, sys, json, re, os, socket
+
+from requests.packages.urllib3.connectionpool import HTTPConnectionPool
+
+# patch requests to capture IP info
+def _make_request(self,conn,method,url,**kwargs):
+    response = self._orig_make_request(conn,method,url,**kwargs)
+    sock = getattr(conn,'sock',False)
+    if sock:
+        setattr(response,'peer',sock.getpeername())
+    else:
+        setattr(response,'peer',None)
+    return response
+HTTPConnectionPool._orig_make_request = HTTPConnectionPool._make_request
+HTTPConnectionPool._make_request = _make_request
+
+import requests
 
 API_BASE_URL = os.environ.get('API_BASE_URL', "http://127.0.0.1:8000/")
 
-def submit_url(url, timestamp, response_body, status = 200, request_headers = [], response_headers = [], method = "GET", request_body = None):
+SOFTWARE_DESC = "Memex Development Archiver https://github.com/istresearch/ist-memex-api"
+
+def submit_url(url, timestamp, response_body, request_body = None, method = "GET", status = 200, request_headers = [], response_headers = [], client_hostname = None, client_ip = None, server_hostname = None, server_ip = None, robots_policy = "classic", software = SOFTWARE_DESC, contact_name = None, contact_email = None):
     data = {
         "url": url,
         "timestamp": timestamp,
-        "method": method,
-        "status": status,
-        "headers": {
-            "request" : request_headers,
-            "response" : response_headers,
+        "request": {
+            "method": method,
+            "client": {
+                "hostname": client_hostname,
+                "address": client_ip,
+                "software": software,
+                "robots": robots_policy,
+                "contact": {
+                    "name": contact_name,
+                    "email": contact_email,
+                },
+            },
+            "headers": request_headers,
+            "body": request_body,
         },
-        "response" : response_body,
-        "request" : request_body,
+        "response": {
+            "status": status,
+            "server": {
+                "hostname": server_hostname,
+                "address": server_ip,
+            },
+            "headers": response_headers,
+            "body" : response_body,
+        },
     }
     key = create_url_key(url)
     api_key_url = "{0}{1}{2}/{3}".format(API_BASE_URL, "url/", key, timestamp)
@@ -50,8 +83,13 @@ def create_url_key(url, separator = "_"):
 
 def get_url(url, headers=None):
      r = requests.get(url, headers=headers)
-     ts = calendar.timegm(datetime.utcnow().utctimetuple())
-     print submit_url(url, ts, r.text, r.status_code, dict(r.request.headers), dict(r.headers), r.request.method)
+     rq = r.request
+     ts = int(round(time.time() * 1000))
+     myip = requests.get('http://ipecho.net/plain').text
+     myfqdn = socket.getfqdn()
+     remip = r.raw._original_response.peer[0]
+     remfqdn = urlparse.urlsplit(url).hostname
+     print submit_url(url, ts, r.text, rq.body, rq.method, r.status_code, dict(rq.headers), dict(r.headers), myfqdn, myip, remfqdn, remip)
      parse(url, ts)
 
 def parse(url, timestamp):
@@ -59,7 +97,7 @@ def parse(url, timestamp):
     api_key_url = "{0}{1}{2}/{3}".format(API_BASE_URL, "url/", key, timestamp)
     r = requests.get(api_key_url)
     data = json.loads(r.text)
-    content = data['data']['response']
+    content = data['response']['body']
 
     matches = extract_phone(content)
     if matches:
