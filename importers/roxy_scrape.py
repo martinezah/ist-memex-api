@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import MySQLdb, calendar, datetime, os, getopt, sys, urlparse, hashlib, json, time, math
+import MySQLdb, calendar, datetime, os, getopt, sys, urlparse, hashlib, json, time, math, random
 from api.models import *
 
 SOFTWARE_DESC = "Memex Development Archiver https://github.com/istresearch/ist-memex-api"
@@ -76,15 +76,14 @@ if __name__ == "__main__":
                     "body" : row[3],
                 },
             }
-            artifacts.append({'urlkey': urlkey, 'timestamp': timestamp, 'data': data})
+            artifacts.append({'urlkey':urlkey, 'timestamp':timestamp, 'data':data})
         retries = 0
-        result = None
         while retries < 10:
+            HBASE_HOST = random.choice(os.environ.get('HBASE_HOST', 'localhost').split(','))
+            sys.stderr.write("{0}: {1}\n".format(HBASE_HOST, str(len(artifacts))))
             try:
-                result = Artifact.put_multi(artifacts) 
+                Artifact.put_multi(artifacts)
                 break
             except:
-                sys.stderr.write('.')
                 time.sleep(math.pow(2,retries))
                 retries += 1
-

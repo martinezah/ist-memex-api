@@ -1,27 +1,25 @@
-import sys, cbor, happybase, re
+import sys, cbor, happybase, re, zlib
 import settings
 
 class Artifact():
 
     @staticmethod
-    def get(urlkey, timestamp):
+    def get(urlkey, timestamp = None):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "artifact_data"))
-        artifact_key = '{0}_{1}'.format(urlkey, timestamp) 
+        if timestamp is not None:
+            artifact_key = '{0}_{1}'.format(urlkey, timestamp) 
+        else:
+            artifact_key = urlkey
         row = table.row(artifact_key)
-        data = cbor.loads(row['f:vv'])
-        data['attributes'] = Attribute.scan(artifact_key)
-        data['timestamp'] = timestamp
-        data['request']['body'] = parse_unicode(data['request']['body'])
-        data['response']['body'] = parse_unicode(data['response']['body'])
-        return data
+        return artifact_get(row['f:vv'], Attribute.scan(artifact_key), timestamp)
 
     @staticmethod
     def put(urlkey, timestamp, data):
         connection = happybase.Connection(settings.HBASE_HOST)
         table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "artifact_data"))
         artifact_key = '{0}_{1}'.format(urlkey, timestamp)
-        table.put(artifact_key, {'f:vv':cbor.dumps(data)})
+        table.put(artifact_key, {'f:vv':artifact_put(data)})
         TimestampIndex.put(urlkey, timestamp)
         return True
 
@@ -32,7 +30,7 @@ class Artifact():
         timestamps = []
         for row in rows:
             artifact_key = '{0}_{1}'.format(row['urlkey'], row['timestamp'])
-            table.put(artifact_key, {'f:vv':cbor.dumps(row['data'])})
+            table.put(artifact_key, {'f:vv':artifact_put(row['data'])})
             timestamps.append({'urlkey':row['urlkey'], 'timestamp':row['timestamp']})
         table.send()
         TimestampIndex.put_multi(timestamps)
@@ -47,11 +45,8 @@ class Artifact():
             for artifact_key, row in table.scan(row_prefix="{0}_".format(urlkey), limit = int(limit)):
                 if expand:
                     kk = artifact_key.split("_")
-                    data = cbor.loads(row['f:vv'])
-                    data['attributes'] = Attribute.scan(artifact_key)
-                    data['timestamp'] = kk[-1]
-                    data['request']['body'] = parse_unicode(data['request']['body'])
-                    data['response']['body'] = parse_unicode(data['response']['body'])
+                    timestamp = kk[-1]
+                    data = artifact_get(row['f:vv'], Attribute.scan(artifact_key), timestamp)
                 else:
                     data = format_artifact_key(artifact_key)
                 result.append(data)
@@ -60,11 +55,8 @@ class Artifact():
             for artifact_key, row in table.scan(row_start="{0}_{1}".format(urlkey, start), row_stop="{0}_{1}".format(urlkey, end), limit = int(limit)):
                 if expand:
                     kk = artifact_key.split("_")
-                    data = cbor.loads(row['f:vv'])
-                    data['timestamp'] = kk[-1]
-                    data['attributes'] = Attribute.scan(artifact_key)
-                    data['request']['body'] = parse_unicode(data['request']['body'])
-                    data['response']['body'] = parse_unicode(data['response']['body'])
+                    timestamp = kk[-1]
+                    data = artifact_get(row['f:vv'], Attribute.scan(artifact_key), timestamp)
                 else:
                     data = format_artifact_key(artifact_key)
                 result.append(data)
@@ -145,6 +137,12 @@ class TimestampIndex():
                 result.append(format_artifact_key(artifact_key))
         return result
 
+    @staticmethod
+    def get_scanner(*args, **kwargs):
+        connection = happybase.Connection(settings.HBASE_HOST)
+        table = connection.table('{0}{1}'.format(settings.HBASE_PREFIX, "timestamp_artifact_index"))
+        return table.scan(*args, **kwargs)
+
 class AttributeIndex():
     
     @staticmethod 
@@ -178,7 +176,19 @@ def format_artifact_key(artifact_key):
     kk = artifact_key.split("_")
     return "/url/{0}/{1}".format("_".join(kk[:-1]), kk[-1])
 
-def parse_unicode(data):
-    if data is not None:
-        return data.decode('latin-1').encode('utf-8')
+def artifact_get(data, attributes, timestamp):
+    data = cbor.loads(zlib.decompress(data))
+    data['attributes'] = attributes
+    data['timestamp'] = timestamp
+    data['request']['body'] = artifact_decode(data['request']['body'])
+    data['response']['body'] = artifact_decode(data['response']['body'])
     return data
+
+def artifact_put(data):
+    return zlib.compress(cbor.dumps(data))
+
+def artifact_decode(data):
+    try:
+        return data.decode('latin-1').encode('utf-8')
+    except:
+        return data
