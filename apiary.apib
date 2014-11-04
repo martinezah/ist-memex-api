@@ -2,9 +2,7 @@ FORMAT: 1A
 HOST: https://10.3.2.30/api/v2
 
 # Memex API
-Memex API provides consolidated access to Memex data and logging services.
-
-**22-Oct-2014** This document describes the **upcoming** v2 API for Memex resources. Production links will result in errors. This notice will be removed when the API is updated. 
+Memex API provides consolidated access to Memex logging services.
 
 Version control for this file is hosted at https://github.com/istresearch/ist-memex-api/
 
@@ -12,277 +10,6 @@ Documentation generated from this file is hosted at http://docs.memexapi.apiary.
 
 Links to `Production` in the examples require access to the Memex VPN
 
-# Group Artifacts 
-Scraped text artifacts resources of the **Memex API**
-
-A description of the schema used for artifact storage can be found on the Memex wiki at https://memexproxy.com/wiki/display/MPM/Archiving+Content
-
-Artifacts are identified by a composite key consisting of the `urlkey`, the URL's FQDN in reverse order and the MD5 hash of the entire URL, separated by underscores, and `timestamp`, the GMT epoch timestamp in milliseconds. 
-    
-## Collection [/artifacts{?limit,expand}]
-### List recent Artifacts [GET]
-+ Parameters
-    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
-    + expand (optional, boolean, `true`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
-+ Response 200  (application/json)
-
-        [
-        {
-            "timestamp" : "[GMT epoch milliseconds]",
-        },
-        ]
-
-### Create an Artifact [POST]
-+ Request (application/json)
-
-        {
-            "url": "http://istresearch.com/blog/2014/10/20/when-big-data-isnt-enough", 
-            "urlkey": "com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340",
-            "timestamp": "1413994406261", 
-            "request": {
-                "body": null, 
-                "headers": {
-                    "Connection": "keep-alive", 
-                    "Accept-Encoding": "gzip, deflate", 
-                    "Accept": "*/*", 
-                    "User-Agent": "python-requests/2.4.3 CPython/2.7.6 Linux/3.13.0-32-generic"
-                }, 
-                "client": {
-                    "software": "Memex Development Archiver https://github.com/istresearch/ist-memex-api", 
-                    "hostname": "localhost", 
-                    "robots": "classic", 
-                    "address": "50.20.87.130", 
-                    "contact": {
-                        "name": null, 
-                        "email": null
-                    }
-                }, 
-                "method": "GET"
-            }, 
-            "response": {
-                "status": 200, 
-                "headers": {
-                    "content-length": "11012", 
-                    "x-servedby": "ny1-prod6-web035.int.peer1.squarespace.net", 
-                    "set-cookie": "JSESSIONID=16zgy3mwknbbw1dwik0z5ezreu;Path=/;HttpOnly, crumb=afc1e52bf1;Path=/, SS_MID=0990eb46-adea-47bd-aa00-be4db4e07ea9i1kvstov;Path=/;Domain=.istresearch.com;Expires=Sat, 19-Oct-2024 16:14:32 GMT", 
-                    "accept-ranges": "bytes", 
-                    "expires": "Thu, 01 Jan 1970 00:00:00 GMT", 
-                    "x-contextid": "21PLMIe1/fScNNzI0", 
-                    "content-encoding": "gzip", 
-                    "x-pc-appver": "1", 
-                    "etag": "W/\"aa316dd44a4262f32aaa9c43c4c64217\"", 
-                    "x-pc-key": "Wg2nDaETSjcjHYQ6v-hcTGNR_t0-istresearch", 
-                    "x-pc-hit": "true", 
-                    "x-via": "1.1 nyc-echo08.int.peer1.squarespace.net", 
-                    "date": "Wed, 22 Oct 2014 16:14:32 GMT", 
-                    "x-pc-date": "Wed, 22 Oct 2014 09:40:08 GMT", 
-                    "content-type": "text/html; charset=UTF-8", 
-                    "x-pc-host": "10.100.101.102"
-                }, 
-                "body": "<!DOCTYPE html> ... </body>\n</html>\n", 
-                "server": {
-                    "hostname": "istresearch.com", 
-                    "address": "65.39.205.61"
-                }
-            }, 
-        }
-        
-+ Response 201 (application/json)
-
-        {
-            "url": "http://istresearch.com/blog/2014/10/20/when-big-data-isnt-enough",
-            "urlkey": "com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340",
-            "timestamp": "1413994406261", 
-            "request": {
-                "body": null, 
-                "headers": {
-                    "Connection": "keep-alive", 
-                    "Accept-Encoding": "gzip, deflate", 
-                    "Accept": "*/*", 
-                    "User-Agent": "python-requests/2.4.3 CPython/2.7.6 Linux/3.13.0-32-generic"
-                }, 
-                "client": {
-                    "software": "Memex Development Archiver https://github.com/istresearch/ist-memex-api", 
-                    "hostname": "localhost", 
-                    "robots": "classic", 
-                    "address": "50.20.87.130", 
-                    "contact": {
-                        "name": null, 
-                        "email": null
-                    }
-                }, 
-                "method": "GET"
-            }, 
-            "response": {
-                "status": 200, 
-                "headers": {
-                    "content-length": "11012", 
-                    "x-servedby": "ny1-prod6-web035.int.peer1.squarespace.net", 
-                    "set-cookie": "JSESSIONID=16zgy3mwknbbw1dwik0z5ezreu;Path=/;HttpOnly, crumb=afc1e52bf1;Path=/, SS_MID=0990eb46-adea-47bd-aa00-be4db4e07ea9i1kvstov;Path=/;Domain=.istresearch.com;Expires=Sat, 19-Oct-2024 16:14:32 GMT", 
-                    "accept-ranges": "bytes", 
-                    "expires": "Thu, 01 Jan 1970 00:00:00 GMT", 
-                    "x-contextid": "21PLMIe1/fScNNzI0", 
-                    "content-encoding": "gzip", 
-                    "x-pc-appver": "1", 
-                    "etag": "W/\"aa316dd44a4262f32aaa9c43c4c64217\"", 
-                    "x-pc-key": "Wg2nDaETSjcjHYQ6v-hcTGNR_t0-istresearch", 
-                    "x-pc-hit": "true", 
-                    "x-via": "1.1 nyc-echo08.int.peer1.squarespace.net", 
-                    "date": "Wed, 22 Oct 2014 16:14:32 GMT", 
-                    "x-pc-date": "Wed, 22 Oct 2014 09:40:08 GMT", 
-                    "content-type": "text/html; charset=UTF-8", 
-                    "x-pc-host": "10.100.101.102"
-                }, 
-                "body": "<!DOCTYPE html> ... </body>\n</html>\n", 
-                "server": {
-                    "hostname": "istresearch.com", 
-                    "address": "65.39.205.61"
-                }
-            }, 
-        }
-        
-## Item [/artifacts/{urlkey}/{timestamp}]
-A single Artifacts item with all its details
-
-+ Parameters
-    + urlkey (required, string, `com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340`) ... `urlkey` of the Artifact to retrieve. 
-    + timestamp (required, string, `1413994406261`) ... `timestamp` of the Artifact to retrieve. 
-
-### Retrieve an Artifact [GET]
-+ Response 200 (application/json)
-
-        {
-            "url": "http://istresearch.com/blog/2014/10/20/when-big-data-isnt-enough",
-            "urlkey": "com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340",
-            "timestamp": "1413994406261", 
-            "request": {
-                "body": null, 
-                "headers": {
-                    "Connection": "keep-alive", 
-                    "Accept-Encoding": "gzip, deflate", 
-                    "Accept": "*/*", 
-                    "User-Agent": "python-requests/2.4.3 CPython/2.7.6 Linux/3.13.0-32-generic"
-                }, 
-                "client": {
-                    "software": "Memex Development Archiver https://github.com/istresearch/ist-memex-api", 
-                    "hostname": "localhost", 
-                    "robots": "classic", 
-                    "address": "50.20.87.130", 
-                    "contact": {
-                        "name": null, 
-                        "email": null
-                    }
-                }, 
-                "method": "GET"
-            }, 
-            "response": {
-                "status": 200, 
-                "headers": {
-                    "content-length": "11012", 
-                    "x-servedby": "ny1-prod6-web035.int.peer1.squarespace.net", 
-                    "set-cookie": "JSESSIONID=16zgy3mwknbbw1dwik0z5ezreu;Path=/;HttpOnly, crumb=afc1e52bf1;Path=/, SS_MID=0990eb46-adea-47bd-aa00-be4db4e07ea9i1kvstov;Path=/;Domain=.istresearch.com;Expires=Sat, 19-Oct-2024 16:14:32 GMT", 
-                    "accept-ranges": "bytes", 
-                    "expires": "Thu, 01 Jan 1970 00:00:00 GMT", 
-                    "x-contextid": "21PLMIe1/fScNNzI0", 
-                    "content-encoding": "gzip", 
-                    "x-pc-appver": "1", 
-                    "etag": "W/\"aa316dd44a4262f32aaa9c43c4c64217\"", 
-                    "x-pc-key": "Wg2nDaETSjcjHYQ6v-hcTGNR_t0-istresearch", 
-                    "x-pc-hit": "true", 
-                    "x-via": "1.1 nyc-echo08.int.peer1.squarespace.net", 
-                    "date": "Wed, 22 Oct 2014 16:14:32 GMT", 
-                    "x-pc-date": "Wed, 22 Oct 2014 09:40:08 GMT", 
-                    "content-type": "text/html; charset=UTF-8", 
-                    "x-pc-host": "10.100.101.102"
-                }, 
-                "body": "<!DOCTYPE html> ... </body>\n</html>\n", 
-                "server": {
-                    "hostname": "istresearch.com", 
-                    "address": "65.39.205.61"
-                }
-            }, 
-            "indexes": [
-                {
-                    "phone": "5403004891"
-                }, 
-                {
-                    "phone": "5404460808"
-                }
-                {
-                    "training_data": "phone_number"
-                }
-            ]
-            "attributes": [
-                {
-                    "training_data_phone_number": {
-                        "timestamp": 1413998606261,
-                        "source": "34.142.123.51",
-                        "input": "5403004891",
-                        "output": "5403004891",
-                        "result": "success",
-                    },
-                },
-            ]
-        }
-
-### Remove an Artifact [DELETE]
-+ Response 204
-
-## Attribute [/artifacts/{urlkey}/{timestamp}/{attribute}]
-Add/Retrieve attributes for an Artifact item
-
-+ Parameters
-    + urlkey (required, string, `com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340`) ... `urlkey` of the Artifact to retrieve. 
-    + timestamp (required, string, `1413994406261`) ... `timestamp` of the Artifact to retrieve. 
-    + attribute (required, string, `phone`) ... `attribute` name requested   
-
-### Retrieve Attribute values for an item [GET]
-+ Response 200 (application/json)
-
-        [{"phone":"5404460808"}]
-        
-### Add an Attribute [PUT]
-+ Request (application/json)
-    
-        "5404460808"
-
-+ Response 200 (application/json)
-
-        {"phone":"5404460808"}
-
-## Timestamp Index [/artifacts/from/{start}/to/{end}{?limit,expand}]
-A list of Artifact items by timestamp, returned in descending order
-
-+ Parameters
-    + start (required, integer, `1413937453213`) ... Maximum timestamp
-    + end (optional, integer, `1413937382546`) ... Minimum timestamp   
-    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
-    + expand (optional, boolean, `false`) ... If true, return full Artifact items; if false, just return keys. Defaults to false.
-
-### Search by Timestamp  [GET]
-+ Response 200 (application/json)
-
-    + Body
-
-            ["com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340/1413994406261"]
-        
-## Attribute Index [/artifacts/by/{key}/{value}{?limit,expand}]
-A list of Artifact items matching a given attribute/value pair
-
-+ Parameters
-    + key (required, string, `source`) ... Attribute key
-    + value (required, string, `10.3.2.30`) ... Attribute value   
-    + limit (optional, integer, `1000`) ... Maximum number of items to return. Defaults to 1000.
-    + expand (optional, boolean, `false`) ... If true, return full Log items; if false, just return keys. Defaults to false.
-
-### Search by Attribute  [GET]
-+ Response 200 (application/json)
-
-    + Body
-
-            ["com_istresearch_ae2a1d21bbf31d106cc36f9606c6688e8dd39340/1413994406261"]
-        
-        
 # Group Logging 
 Logging resources of the **Memex API**
 
@@ -301,14 +28,14 @@ Discussion of activity types and logging detail specifics for various activity t
         {
             "key" : "[RFC 4122 UUID]",
             "time": {
-                "startedAt": "GMT epoch milliseconds of the activity started. Required.",
+                "startedAt": "GMT epoch milliseconds of the activity started. Required. Defaults to current server time.",
                 "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
             },
             "action": {
                 "type": "SYSTEM | USER. Required.",
-                "description": "description of event. Optional.",
-                "workflow": "high level workflow step. Required.",
-                "activity": "high level activity (see below). Required.",
+                "description": "description of event. Required.",
+                "workflow": "high level workflow step. Optional.",
+                "activity": "high level activity (see below). Optional."
             },
             "client": {   
                 "ipAddess": "IP address of client. Optional.",
@@ -317,10 +44,10 @@ Discussion of activity types and logging detail specifics for various activity t
                 "userAgent": "user agent (e.g. browser) of client. Optional",
             },
             "component": {
-                "apiLanguage": "the programming language used to create the message. Optional.",
-                "apiVersion": "the logging API version used for this message. Required.",
                 "name": "name of the tool sending logs. Required.",
                 "version": "tool version. Required.",
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required. Defaults to current API version.",
             },
             "acl": {
                 "privacy": "public | private | controlled. Required.",
@@ -350,16 +77,16 @@ Discussion of activity types and logging detail specifics for various activity t
 + Request (application/json)
 
         {
-            "key" : "[RFC 4122 UUID]",
+            "key" : "[RFC 4122 UUID]. Required. Defaults to Type 4 (random) UUID.",
             "time": {
-                "startedAt": "GMT epoch milliseconds of the activity started. Required.",
+                "startedAt": "GMT epoch milliseconds of the activity started. Required. Defaults to current server time.",
                 "endedAt": "GMT epoch milliseconds of  activity ended. Optional."
             },
             "action": {
                 "type": "SYSTEM | USER. Required.",
-                "description": "description of event. Optional.",
-                "workflow": "high level workflow step. Required.",
-                "activity": "high level activity (see below). Required.",
+                "description": "description of event. Required.",
+                "workflow": "high level workflow step. Optional.",
+                "activity": "high level activity (see below). Optional."
             },
             "client": {   
                 "ipAddess": "IP address of client. Optional.",
@@ -368,10 +95,10 @@ Discussion of activity types and logging detail specifics for various activity t
                 "userAgent": "user agent (e.g. browser) of client. Optional",
             },
             "component": {
-                "apiLanguage": "the programming language used to create the message. Optional.",
-                "apiVersion": "the logging API version used for this message. Required.",
                 "name": "name of the tool sending logs. Required.",
                 "version": "tool version. Required.",
+                "apiLanguage": "the programming language used to create the message. Optional.",
+                "apiVersion": "the logging API version used for this message. Required. Defaults to current API version.",
             },
             "acl": {
                 "privacy": "public | private | controlled. Required.",
@@ -395,6 +122,7 @@ Discussion of activity types and logging detail specifics for various activity t
                 },
             ]
         }
+
         
 + Response 201 (application/json)
 
